@@ -1,10 +1,84 @@
 version: '3.8'
 services:
-  web:
-      build:
-          context: . 
-          dockerfile: Dockerfile
-      ports:
-          - "80:80"
-      volumes:
-          - ./nginx.conf:/etc/nginx/nginx.conf
+
+  db:
+    image: mysql:8.1
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: grader
+    ports:
+      - "3307:3306"
+    networks:
+      - app-network
+    healthcheck:
+      test: [ "CMD-SHELL", "mysqladmin ping -h localhost -u root -password || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  web-grader:
+    build:
+      context: ../web-grader
+      dockerfile: Dockerfile
+    depends_on:
+      - grader-service
+    ports:
+      - "80:80"
+    networks:
+      - app-network
+
+  grader-service:
+    build:
+      context: ../grader-service
+      dockerfile: Dockerfile
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/grader
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    networks:
+      - app-network
+
+  multiplayer-service:
+    build:
+      context: ../multiplayer-service
+      dockerfile: Dockerfile
+    ports:
+      - "5555:5555"
+    depends_on:
+      - db
+    networks:
+      - app-network
+  
+  python-sandbox-service:
+    container_name: python-sandbox-service
+    build:
+      context: ../python-sandbox-service
+      dockerfile: Dockerfile.app
+    environment:
+      - PATH_SUBMISSION=submissions
+      - IMAGE_DOCKER=python-sandbox:latest
+    ports:
+      - "8001:8001"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock # link to host docker socket
+      - submissions:/src/sandbox
+    networks:
+      - app-network
+  
+  python-sandbox:
+    container_name: python-sandbox
+    build:
+      context: ../python-sandbox-service
+      dockerfile: Dockerfile.sandbox
+    working_dir: /sandbox
+    command: python --version
+
+volumes:
+  submissions:
+    name: submissions
+
+networks:
+  app-network:
+    driver: bridge
