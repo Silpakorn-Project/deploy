@@ -33,6 +33,9 @@ services:
       dockerfile: Dockerfile
     environment:
       SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/grader
+      SPRING_PYTHON_URL: http://python-sandbox-service:8001
+      SPRING_JAVA_URL: http://java-sandbox-service:8002
+      SPRING_C_URL: http://c-sandbox-service:8003
     ports:
       - "8000:8000"
     depends_on:
