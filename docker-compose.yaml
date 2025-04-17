@@ -54,6 +54,32 @@ services:
     networks:
       - app-network
   
+  c-sandbox-service:
+    container_name: c-sandbox-service
+    build:
+      context: ../c-sandbox-service
+      dockerfile: Dockerfile
+    ports:
+      - "8003:8003"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock # link to host docker socket
+      - submissions:/app/work
+    networks:
+      - app-network
+
+  java-sandbox-service:
+    container_name: java-sandbox-service
+    build:
+      context: ../java-sandbox-service
+      dockerfile: Dockerfile
+    ports:
+      - "8002:8002"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock # link to host docker socket
+      - submissions:/app/work
+    networks:
+      - app-network
+  
   python-sandbox-service:
     container_name: python-sandbox-service
     build:
